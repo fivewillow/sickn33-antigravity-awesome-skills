@@ -1,0 +1,39 @@
+name: Auto Sync Fork
+
+on:
+  schedule:
+    # 設定排程：每天 UTC 時間 00:00 自動執行一次 (台灣時間早上 08:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 保留手動觸發的按鈕，方便隨時測試
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 檢出你目前的儲存庫 (Origin)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 獲取完整的歷史紀錄以利合併
+
+      # 2. 設定 Git 資訊並執行同步邏輯
+      - name: Sync with upstream
+        run: |
+          # 設定暫時的 Git 使用者資訊
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 加入上游儲存庫的網址 (請將以下 URL 替換為原專案的網址)
+          git remote add upstream https://github.com/sickn33/antigravity-awesome-skills.git
+          
+          # 獲取上游的最新狀態
+          git fetch upstream
+          
+          # 確保位於預設分支 (這裡以 main 為例，若是 master 請自行修改)
+          git checkout main
+          
+          # 將上游的 main 分支合併到目前的 main 分支
+          git merge upstream/main --allow-unrelated-histories
+          
+          # 推送更新到你的 GitHub 儲存庫
+          git push origin main
