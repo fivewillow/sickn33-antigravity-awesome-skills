@@ -1,0 +1,42 @@
+name: Auto Sync Fork
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # disable github token
+          persist-credentials: false 
+
+      - name: Sync with upstream
+        env:
+          MY_PAT: ${{ secrets.PAT_FOR_SYNC }}
+        run: |
+          # Check Secret
+          if [ -z "$MY_PAT" ]; then
+            echo "❌ ERROR：can not find PAT_FOR_SYNC！"
+            exit 1
+          fi
+          
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Origin upstream source
+          git remote add upstream https://github.com/sickn33/antigravity-awesome-skills.git
+          git fetch upstream
+          git checkout main
+          # git reset --hard upstream/main
+          
+          echo "✅ Using PAT to push..."
+          git push -f https://x-access-token:${MY_PAT}@github.com/fivewillow/sickn33-antigravity-awesome-skills.git main
